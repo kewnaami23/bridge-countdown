@@ -4,75 +4,151 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>নড়িয়া ব্রীজ কাউন্টডাউন</title>
-
 <style>
-body{
-font-family:Segoe UI;
-text-align:center;
-background:#0f2027;
-color:white;
-padding-top:80px;
+body {
+  margin:0;
+  font-family:Segoe UI,sans-serif;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  text-align:center;
 }
-
-.timer{
-display:flex;
-justify-content:center;
-gap:20px;
-margin-top:40px;
+.container {
+  background:rgba(255,255,255,0.08);
+  padding:40px;
+  border-radius:20px;
+  width:90%;
+  max-width:700px;
 }
-
-.box{
-background:#203a43;
-padding:20px;
-border-radius:10px;
-width:100px;
-font-size:30px;
+h1 { font-size:26px; margin-bottom:10px; }
+.subtitle { opacity:0.7; margin-bottom:20px; }
+.timer {
+  display:flex;
+  justify-content:center;
+  gap:20px;
+  flex-wrap:wrap;
+  margin-top:20px;
 }
-
-span{
-display:block;
-font-size:14px;
-margin-top:5px;
+.box {
+  background:rgba(0,0,0,0.4);
+  padding:20px;
+  border-radius:12px;
+  width:100px;
+  font-size:32px;
+  font-weight:bold;
 }
+.label { font-size:14px; opacity:0.8; margin-top:5px; }
+.progress {
+  margin-top:30px;
+  height:10px;
+  background:rgba(255,255,255,0.2);
+  border-radius:20px;
+  overflow:hidden;
+}
+.bar {
+  height:100%;
+  width:0%;
+  background:#4facfe;
+  transition:1s width linear;
+}
+.stats { margin-top:20px; font-size:16px; opacity:0.9; }
 </style>
-
 </head>
-
 <body>
-
-<h1>শফিকুর রহমান কিরনের ওয়াদা মোতাবেক নড়িয়া ব্রীজ চালু করতে বাকি</h1>
-
-<div class="timer">
-<div class="box"><div id="days">0</div><span>Days</span></div>
-<div class="box"><div id="hours">0</div><span>Hours</span></div>
-<div class="box"><div id="minutes">0</div><span>Minutes</span></div>
-<div class="box"><div id="seconds">0</div><span>Seconds</span></div>
+<div class="container">
+  <h1>শফিকুর রহমান কিরনের ওয়াদা অনুযায়ী নড়িয়া ব্রীজ চালু হতে বাকি</h1>
+  <div class="subtitle">১২ ফেব্রুয়ারি ২০২৬ → ১২ আগস্ট ২০২৬</div>
+  <div class="timer">
+    <div class="box"><div id="days">0</div><div class="label">দিন</div></div>
+    <div class="box"><div id="hours">0</div><div class="label">ঘণ্টা</div></div>
+    <div class="box"><div id="minutes">0</div><div class="label">মিনিট</div></div>
+    <div class="box"><div id="seconds">0</div><div class="label">সেকেন্ড</div></div>
+  </div>
+  <div class="progress"><div class="bar" id="progress"></div></div>
+  <div class="stats">
+    <p>এ পর্যন্ত কেটেছে: <span id="passedDays">0</span> দিন</p>
+    <p>মোট ভিজিটর: <span id="visitors">0</span></p>
+  </div>
 </div>
 
 <script>
+(function() {
+  const daysEl = document.getElementById("days");
+  const hoursEl = document.getElementById("hours");
+  const minutesEl = document.getElementById("minutes");
+  const secondsEl = document.getElementById("seconds");
+  const progressEl = document.getElementById("progress");
+  const passedEl = document.getElementById("passedDays");
+  const visitorsEl = document.getElementById("visitors");
 
-const endDate = new Date("Aug 12, 2026 00:00:00").getTime();
+  // Bangladesh timezone countdown
+  const startDate = new Date("Feb 12, 2026 00:00:00 UTC+6").getTime();
+  const endDate = new Date("Aug 12, 2026 00:00:00 UTC+6").getTime();
 
-function update(){
+  function safeUpdate(el, value) {
+    if(el && el.innerText != value) el.innerText = value;
+  }
 
-const now = new Date().getTime();
-const distance = endDate - now;
+  function updateTimer() {
+    const now = Date.now();
+    let distance = endDate - now;
 
-const days = Math.floor(distance/(1000*60*60*24));
-const hours = Math.floor((distance%(1000*60*60*24))/(1000*60*60));
-const minutes = Math.floor((distance%(1000*60*60))/(1000*60));
-const seconds = Math.floor((distance%(1000*60))/1000);
+    if(distance <= 0) {
+      const timerContainer = document.querySelector(".timer");
+      if(timerContainer) timerContainer.innerHTML = "<h2>সময় শেষ</h2>";
+      if(progressEl) progressEl.style.width = "100%";
+      return;
+    }
 
-document.getElementById("days").innerHTML = days;
-document.getElementById("hours").innerHTML = hours;
-document.getElementById("minutes").innerHTML = minutes;
-document.getElementById("seconds").innerHTML = seconds;
+    const days = Math.floor(distance / (1000*60*60*24));
+    const hours = Math.floor((distance % (1000*60*60*24)) / (1000*60*60));
+    const minutes = Math.floor((distance % (1000*60*60)) / (1000*60));
+    const seconds = Math.floor((distance % (1000*60)) / 1000);
 
-}
+    safeUpdate(daysEl, days);
+    safeUpdate(hoursEl, hours);
+    safeUpdate(minutesEl, minutes);
+    safeUpdate(secondsEl, seconds);
 
-setInterval(update,1000);
+    const total = endDate - startDate;
+    const passed = now - startDate;
+    const percent = Math.min(Math.max((passed/total)*100,0),100);
 
+    if(progressEl) progressEl.style.width = percent + "%";
+    safeUpdate(passedEl, Math.floor(passed / (1000*60*60*24)));
+
+    requestAnimationFrame(updateTimer);
+  }
+
+  // Secure visitor counter using HTTPS API (replace with your real endpoint)
+  async function fetchVisitorCount() {
+    try {
+      const res = await fetch("https://yourdomain.com/api/visit", { method: "POST" });
+      if(!res.ok) throw new Error("Network error");
+      const data = await res.json();
+      safeUpdate(visitorsEl, data.visitorCount || 0);
+    } catch(e) {
+      console.warn("Visitor count failed", e);
+      // fallback: localStorage
+      try {
+        let visits = parseInt(localStorage.getItem("visit-count")) || 0;
+        visits++;
+        localStorage.setItem("visit-count", visits);
+        safeUpdate(visitorsEl, visits);
+      } catch(err) {
+        safeUpdate(visitorsEl, 0);
+      }
+    }
+  }
+
+  // Start countdown
+  updateTimer();
+  fetchVisitorCount();
+
+})();
 </script>
-
 </body>
 </html>
